@@ -7,7 +7,7 @@ class PointsController {
     const { city, state, items } = request.query
     
     // Split the expected array and then filter only numbers
-    let parsedItems = String(items).split(',').map(item => Number(item.trim())).filter( item => !Number.isNaN(item))
+    const parsedItems = String(items).split(',').map(item => Number(item.trim())).filter( item => !Number.isNaN(item))
     
     const points = await connection('points')
       .join('point_items', 'point_items.point_id', '=', 'points.id')
@@ -28,8 +28,6 @@ class PointsController {
   }
 
   async show(request: Request, response: Response) {
-    console.log("Id:");
-
     const id = request.params.id
         
     const point = await connection('points').where('id', id).first()
