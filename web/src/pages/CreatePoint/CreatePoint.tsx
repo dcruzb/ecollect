@@ -1,5 +1,5 @@
-import React, { useEffect, useState, ChangeEvent } from 'react'
-import { Link } from 'react-router-dom'
+import React, { useEffect, useState, ChangeEvent, FormEvent } from 'react'
+import { Link, useHistory } from 'react-router-dom'
 import { FiArrowLeft } from 'react-icons/fi'
 import { Map, TileLayer, Marker } from 'react-leaflet'
 import { LeafletMouseEvent } from "leaflet";
@@ -34,6 +34,15 @@ const CreatePoint = () => {
   let [selectedState, setSelectedState] = useState('0')
   let [selectedCity, setSelectedCity] = useState('0')
   let [selectedPosition, setSelectedPosition] = useState<[number, number]>([0, 0])
+  let [selectedItems, setSelectedItems] = useState<number[]>([])
+  let [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    whatsapp: '',
+    street: ''
+  })
+
+  const history = useHistory()
 
   useEffect(() => {
     api.get('items').then(response => {
@@ -54,7 +63,7 @@ const CreatePoint = () => {
   }, [])
 
   useEffect(() => {  
-    if (selectedState == '0') {
+    if (selectedState === '0') {
       setCities([])
       return
     }
@@ -76,6 +85,39 @@ const CreatePoint = () => {
     setSelectedPosition([event.latlng.lat, event.latlng.lng]);    
   }
 
+  function handleInputChange(event: ChangeEvent<HTMLInputElement>) {
+    setFormData({ ...formData, [event.target.name]: event.target.value})
+  }
+  
+  function handleItemClick(id: number) {
+    if (selectedItems.includes(id)) {
+      setSelectedItems(selectedItems.filter(item => item != id))
+    } else {
+      setSelectedItems([...selectedItems, id])
+    }
+  }
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault()
+
+    const point = {
+      image: '',
+      name: formData.name,
+      email: formData.email,
+      whatsapp: formData.whatsapp,
+      latitude: selectedPosition[0],
+      longitude: selectedPosition[1],
+      street: formData.street,
+      city: selectedCity,
+      state: selectedState,
+      items: selectedItems
+    }
+
+    await api.post('points', point)
+    alert('Collect Point registered successfully')
+    history.push('/')
+  }
+
   return (
     <div id="page-create-point">
       <header>
@@ -87,7 +129,7 @@ const CreatePoint = () => {
         </Link>
       </header>
 
-      <form action="">
+      <form onSubmit={handleSubmit}>
         <h1>Add a Collection Point</h1>
 
         <fieldset>
@@ -97,17 +139,17 @@ const CreatePoint = () => {
 
           <div className="field">
             <label htmlFor="name">Entity name</label>
-            <input type="text" id="name" name="name"/>
+            <input type="text" id="name" name="name" onChange={handleInputChange}/>
           </div>
 
           <div className="field-group">
             <div className="field">
               <label htmlFor="email">E-mail</label>
-              <input type="text" id="email" name="email"/>
+              <input type="text" id="email" name="email" onChange={handleInputChange}/>
             </div>
             <div className="field">
               <label htmlFor="whatsapp">Whatsapp</label>
-              <input type="text" id="whatsapp" name="whatsapp"/>
+              <input type="text" id="whatsapp" name="whatsapp" onChange={handleInputChange}/>
             </div>
           </div>
         </fieldset>
@@ -130,7 +172,7 @@ const CreatePoint = () => {
 
           <div className="field">
             <label htmlFor="street">Street</label>
-            <input type="text" id="street" name="street"/>
+            <input type="text" id="street" name="street" onChange={handleInputChange}/>
           </div>
 
           <div className="field-group">
@@ -165,7 +207,10 @@ const CreatePoint = () => {
 
           <ul className="items-grid">
             {items.map(item => (
-              <li key={item.id}>
+              <li 
+                key={item.id} 
+                className={selectedItems.includes(item.id) ? 'selected' : ''}
+                onClick={() => handleItemClick(item.id)}>
                 <img src={item.image_url} alt={item.title}/>
                 <span>{item.title}</span>
               </li>
