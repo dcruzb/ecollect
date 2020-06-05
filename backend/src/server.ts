@@ -6,7 +6,7 @@ import path from 'path'
 const app = express()
 
 app.use(cors({
-  origin: 'localhost'
+  origin: 'http://localhost:3000'
 }))
 app.use(express.json())
 app.use(routes)
