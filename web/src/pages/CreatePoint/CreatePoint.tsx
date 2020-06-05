@@ -2,6 +2,7 @@ import React, { useEffect, useState, ChangeEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { FiArrowLeft } from 'react-icons/fi'
 import { Map, TileLayer, Marker } from 'react-leaflet'
+import { LeafletMouseEvent } from "leaflet";
 import api, { apiIBGE } from '../../services/api'
 
 import "./CreatePoint.css";
@@ -28,13 +29,21 @@ const CreatePoint = () => {
   let [items, setItems] = useState<Item[]>([])
   let [states, setStates] = useState<State[]>([])
   let [cities, setCities] = useState<City[]>([])
+  let [InitialPosition, setInitialPosition] = useState<[number, number]>([0, 0])
   
   let [selectedState, setSelectedState] = useState('0')
   let [selectedCity, setSelectedCity] = useState('0')
+  let [selectedPosition, setSelectedPosition] = useState<[number, number]>([0, 0])
 
   useEffect(() => {
     api.get('items').then(response => {
       setItems(response.data)
+    })
+  }, [])
+
+  useEffect(() => {
+    navigator.geolocation.getCurrentPosition((response) => {
+      setInitialPosition([response.coords.latitude, response.coords.longitude])
     })
   }, [])
 
@@ -44,9 +53,7 @@ const CreatePoint = () => {
     })
   }, [])
 
-  useEffect(() => {
-    console.log('mudou', selectedState);
-    
+  useEffect(() => {  
     if (selectedState == '0') {
       setCities([])
       return
@@ -63,6 +70,10 @@ const CreatePoint = () => {
 
   function handleSelectCity(event: ChangeEvent<HTMLSelectElement>) {
     setSelectedCity(event.target.value)
+  }
+
+  function handleMapClick(event: LeafletMouseEvent) {
+    setSelectedPosition([event.latlng.lat, event.latlng.lng]);    
   }
 
   return (
@@ -107,13 +118,13 @@ const CreatePoint = () => {
             <span>Select the address on the map</span>
           </legend>
 
-          <Map center={[-8.02136,-34.961676]} zoom={15}>
+          <Map center={InitialPosition} zoom={15} onClick={handleMapClick}>
             <TileLayer
               attribution='&amp;copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
 
-            <Marker position={[-8.02136,-34.961676]} />
+            <Marker position={selectedPosition} />
           </Map>
 
 
