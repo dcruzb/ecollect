@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, ChangeEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { FiArrowLeft } from 'react-icons/fi'
 import { Map, TileLayer, Marker } from 'react-leaflet'
-import api from '../../services/api'
+import api, { apiIBGE } from '../../services/api'
 
 import "./CreatePoint.css";
 import logo from '../../assets/logo.svg'
@@ -13,14 +13,57 @@ interface Item {
   image_url: string
 }
 
+interface State {
+  id: number, 
+  sigla: string, 
+  nome: string
+}
+
+interface City {
+  id: number,
+  nome: string
+}
+
 const CreatePoint = () => {
   let [items, setItems] = useState<Item[]>([])
+  let [states, setStates] = useState<State[]>([])
+  let [cities, setCities] = useState<City[]>([])
+  
+  let [selectedState, setSelectedState] = useState('0')
+  let [selectedCity, setSelectedCity] = useState('0')
 
   useEffect(() => {
     api.get('items').then(response => {
       setItems(response.data)
     })
   }, [])
+
+  useEffect(() => {
+    apiIBGE.get<State[]>('?orderBy=nome').then(response => {
+      setStates(response.data)
+    })
+  }, [])
+
+  useEffect(() => {
+    console.log('mudou', selectedState);
+    
+    if (selectedState == '0') {
+      setCities([])
+      return
+    }
+
+    apiIBGE.get<City[]>(`${selectedState}/municipios?orderBy=nome`).then(response => {
+      setCities(response.data)
+    })
+  }, [selectedState])
+
+  function handleSelectState(event: ChangeEvent<HTMLSelectElement>) {
+    setSelectedState(event.target.value)
+  }
+
+  function handleSelectCity(event: ChangeEvent<HTMLSelectElement>) {
+    setSelectedCity(event.target.value)
+  }
 
   return (
     <div id="page-create-point">
@@ -80,18 +123,27 @@ const CreatePoint = () => {
           </div>
 
           <div className="field-group">
+
             <div className="field">
               <label htmlFor="state">State</label>
-              <select name="state" id="state">
+              <select name="state" id="state" value={selectedState} onChange={handleSelectState}>
                 <option value="0">Choose a State</option>
+                {states.map(state => (
+                  <option key={state.id} value={state.sigla}>{state.nome}</option>
+                ))}
               </select>
             </div>
+
             <div className="field">
               <label htmlFor="city">City</label>
-              <select name="city" id="city">
+              <select name="city" id="city" value={selectedCity} onChange={handleSelectCity}>
                 <option value="0">Choose a City</option>
+                {cities.map(city => (
+                  <option key={city.nome} value={city.nome}>{city.nome}</option>
+                ))}
               </select>
             </div>
+
           </div>
         </fieldset>
 
