@@ -1,6 +1,5 @@
 import { Request, Response } from 'express'
 import connection from '../database/connection'
-import Knex from 'knex'
 
 class PointsController {
   async index(request: Request, response: Response) {
@@ -22,9 +21,16 @@ class PointsController {
           builder.where('points.state', String(state))
       })
       .distinct()
-      .select('points.*')    
+      .select('points.*')
 
-    return response.json(points)
+    const serializedPoints = points.map(point => {
+      return {
+        ...point,
+        image: `/uploads/${point.image}`
+      }
+    })
+
+    return response.json(serializedPoints)
   }
 
   async show(request: Request, response: Response) {
@@ -41,11 +47,22 @@ class PointsController {
       .where('point_items.point_id', id)
       .select('items.title')
 
-    return response.json({point, items})
+    const serializedPoint = {
+        ...point,
+        image: `/uploads/${point.image}`
+    }
+
+    return response.json({point: serializedPoint, items})
   }
 
   async create(request: Request, response: Response) {
-    const {image, name, email, whatsapp, latitude, longitude, street, city, state, items} = request.body
+    console.log(request.body);
+    
+    const {name, email, whatsapp, latitude, longitude, street, city, state, items} = JSON.parse(request.body.point)
+    console.log(request.body.point);
+    console.log(request.body.point.name);
+    
+    const image = request.file.filename
 
     const trx = await connection.transaction()
 
