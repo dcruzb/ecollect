@@ -1,8 +1,9 @@
 import axios from "axios"
 
+export const apiBaseURL = 'http://192.168.25.36:3333'
 
 const api = axios.create({
-  baseURL: 'http://192.168.25.36:3333'
+  baseURL: apiBaseURL
 })
 
 export const apiIBGE = axios.create({

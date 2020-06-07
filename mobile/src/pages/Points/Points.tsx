@@ -7,7 +7,7 @@ import Constants from 'expo-constants'
 import { Feather as Icon } from '@expo/vector-icons'
 import * as Location from 'expo-location'
 
-import api from '../../services/api'
+import api, { apiBaseURL } from '../../services/api'
 
 interface Item {
   id: number,
@@ -41,7 +41,13 @@ const Points = () => {
 
   useEffect(() => {
     api.get('items').then(response => {
-      setItems(response.data)
+      let serializedItems: Item[] = response.data
+      serializedItems = serializedItems.map(item => ({
+        ...item,
+        image_url: `${apiBaseURL}${item.image_url}`
+      }))
+
+      setItems(serializedItems)
     })
   }, [])
 
@@ -70,7 +76,10 @@ const Points = () => {
         items: selectedItems
       }
     }).then(response => {
-      setPoints(response.data)
+      setPoints(response.data.map((point: Point) => ({
+        ...point,
+        image: `${apiBaseURL}${point.image}`
+      })))
     })
   }, [selectedItems])
 
@@ -125,7 +134,7 @@ const Points = () => {
                   </View>
                 </Marker>
               )) }
-            </MapView>
+            </MapView> 
           ) }
         </View>
       </View>

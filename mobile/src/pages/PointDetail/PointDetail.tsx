@@ -6,7 +6,7 @@ import { Feather as Icon, FontAwesome } from '@expo/vector-icons'
 import { RectButton } from 'react-native-gesture-handler'
 import * as MailComposer from 'expo-mail-composer'
 
-import api from '../../services/api'
+import api, { apiBaseURL } from '../../services/api'
 
 interface Params {
   pointId: number
@@ -38,7 +38,11 @@ const PointDetail = () => {
 
   useEffect(() => {
     api.get(`points/${pointId}`).then(response => {
-      setPoint({ ...response.data.point, items: response.data.items })
+      console.log(response.data);
+      let serializedPoint = { ...response.data.point, items: response.data.items }
+      serializedPoint = { ...serializedPoint, image: `${apiBaseURL}${serializedPoint.image}` }
+      
+      setPoint(serializedPoint)
     })
   }, [])
 
@@ -76,7 +80,7 @@ const PointDetail = () => {
         
         <Image style={styles.pointImage} source={{ uri: point.image}}/>
         <Text style={styles.pointName}>{point.name}</Text>
-        <Text style={styles.pointItems}>{point.items.map(item => item.title).join(',')}</Text>
+        <Text style={styles.pointItems}>{point.items.map(item => item.title).join(', ')}</Text>
 
         <View style={styles.address}>
           <Text style={styles.addressTitle}>Address</Text>
