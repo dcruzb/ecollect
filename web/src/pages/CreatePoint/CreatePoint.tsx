@@ -3,10 +3,11 @@ import { Link, useHistory } from 'react-router-dom'
 import { FiArrowLeft } from 'react-icons/fi'
 import { Map, TileLayer, Marker } from 'react-leaflet'
 import { LeafletMouseEvent } from "leaflet";
-import api, { apiIBGE } from '../../services/api'
+import api, { apiIBGE, apiBaseURL } from '../../services/api'
 
 import "./CreatePoint.css";
 import logo from '../../assets/logo.svg'
+import Dropzone from '../../components/Dropzone'
 
 interface Item {
   id: number,
@@ -31,6 +32,7 @@ const CreatePoint = () => {
   let [cities, setCities] = useState<City[]>([])
   let [InitialPosition, setInitialPosition] = useState<[number, number]>([0, 0])
   
+  let [selectedImage, setSelectedImage] = useState<File>()
   let [selectedState, setSelectedState] = useState('0')
   let [selectedCity, setSelectedCity] = useState('0')
   let [selectedPosition, setSelectedPosition] = useState<[number, number]>([0, 0])
@@ -46,7 +48,10 @@ const CreatePoint = () => {
 
   useEffect(() => {
     api.get('items').then(response => {
-      setItems(response.data)
+      setItems(response.data.map((item: Item) => ({
+        ...item,
+        image_url: `${apiBaseURL}${item.image_url}`
+      })))
     })
   }, [])
 
@@ -98,10 +103,9 @@ const CreatePoint = () => {
   }
 
   async function handleSubmit(event: FormEvent) {
-    event.preventDefault()
+    event.preventDefault() 
 
     const point = {
-      image: '',
       name: formData.name,
       email: formData.email,
       whatsapp: formData.whatsapp,
@@ -113,7 +117,13 @@ const CreatePoint = () => {
       items: selectedItems
     }
 
-    await api.post('points', point)
+    const data = new FormData()
+    data.append('point', JSON.stringify(point))
+    if (selectedImage) {
+      data.append('image', selectedImage)
+    }
+
+    await api.post('points', data)
     alert('Collect Point registered successfully')
     history.push('/')
   }
@@ -131,6 +141,8 @@ const CreatePoint = () => {
 
       <form onSubmit={handleSubmit}>
         <h1>Add a Collection Point</h1>
+
+        <Dropzone onFileUploaded={setSelectedImage}/>
 
         <fieldset>
           <legend>
